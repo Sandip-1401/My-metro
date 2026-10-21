@@ -12,17 +12,14 @@ import {
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
-// -------------------------------------------------------------
-// 1. METRO LINES (Corridors: Blue Line, Red Line)
-// -------------------------------------------------------------
 export const metroLines = pgTable(
   'metro_lines',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    code: varchar('code', { length: 20 }).notNull().unique(), // e.g., 'BLUE_LINE', 'RED_LINE'
-    name: varchar('name', { length: 100 }).notNull(), // 'East-West Corridor', 'North-South Corridor'
-    displayName: varchar('display_name', { length: 100 }).notNull(), // 'Blue Line', 'Red Line'
-    color: varchar('color', { length: 20 }).notNull(), // hex color, e.g., '#2563eb', '#dc2626'
+    code: varchar('code', { length: 20 }).notNull().unique(),
+    name: varchar('name', { length: 100 }).notNull(),
+    displayName: varchar('display_name', { length: 100 }).notNull(),
+    color: varchar('color', { length: 20 }).notNull(),
     isActive: boolean('is_active').default(true).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
@@ -31,14 +28,11 @@ export const metroLines = pgTable(
   ]
 );
 
-// -------------------------------------------------------------
-// 2. STATIONS (Unique physical stations in Ahmedabad network)
-// -------------------------------------------------------------
 export const stations = pgTable(
   'stations',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    code: varchar('code', { length: 10 }).notNull().unique(), // e.g., 'OHCT', 'THLT', 'APMC'
+    code: varchar('code', { length: 10 }).notNull().unique(),
     name: varchar('name', { length: 100 }).notNull(),
     gujaratiName: varchar('gujarati_name', { length: 150 }),
     hindiName: varchar('hindi_name', { length: 150 }),
@@ -56,11 +50,6 @@ export const stations = pgTable(
   ]
 );
 
-// -------------------------------------------------------------
-// 3. STATION_LINES (Many-to-Many junction: Station <-> Line)
-// Interchange stations like 'Old High Court' exist once in `stations`
-// but have multiple records here with specific sequence orders.
-// -------------------------------------------------------------
 export const stationLines = pgTable(
   'station_lines',
   {
@@ -83,9 +72,6 @@ export const stationLines = pgTable(
   ]
 );
 
-// -------------------------------------------------------------
-// 4. STATION_CONNECTIONS (Graph Edges for Route Algorithm)
-// -------------------------------------------------------------
 export const stationConnections = pgTable(
   'station_connections',
   {
@@ -114,9 +100,6 @@ export const stationConnections = pgTable(
   ]
 );
 
-// -------------------------------------------------------------
-// 5. FARE RULES (Distance Slabs per GMRC Official Schedule)
-// -------------------------------------------------------------
 export const fareRules = pgTable(
   'fare_rules',
   {
@@ -129,9 +112,6 @@ export const fareRules = pgTable(
   }
 );
 
-// -------------------------------------------------------------
-// 6. USERS
-// -------------------------------------------------------------
 export const users = pgTable(
   'users',
   {
@@ -148,9 +128,6 @@ export const users = pgTable(
   ]
 );
 
-// -------------------------------------------------------------
-// 7. BOOKINGS
-// -------------------------------------------------------------
 export const bookings = pgTable(
   'bookings',
   {
@@ -179,9 +156,6 @@ export const bookings = pgTable(
   ]
 );
 
-// -------------------------------------------------------------
-// 8. TICKETS (Demonstration Passes with QR verification token)
-// -------------------------------------------------------------
 export const tickets = pgTable(
   'tickets',
   {
@@ -202,9 +176,7 @@ export const tickets = pgTable(
   ]
 );
 
-// -------------------------------------------------------------
 // RELATIONS DEFINITIONS (Drizzle Query API support)
-// -------------------------------------------------------------
 export const metroLinesRelations = relations(metroLines, ({ many }) => ({
   stationLines: many(stationLines),
   stationConnections: many(stationConnections),
