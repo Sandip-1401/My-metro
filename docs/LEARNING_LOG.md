@@ -79,8 +79,19 @@
 
 ---
 
-## Next Step to Resume: Sub-Step 2.3 — Dijkstra's Shortest Path & Fare Calculation Engine
-- **Goal:** Implement Dijkstra's algorithm on the `MetroGraph` to find the shortest path, calculate total distance/travel time, detect line interchanges, and apply GMRC fare slabs.
-- **Files to create:**
-  - `src/lib/routing/dijkstra.ts`: `findShortestRoute(graph, originCode, destinationCode, fareRules)` function.
-  - `src/lib/routing/dijkstra.test.ts`: Unit tests testing same-line routes, cross-line interchange routes (Blue <-> Red via Old High Court), and edge cases (same origin/dest, invalid station codes).
+### Sub-Step 2.3: Dijkstra's Shortest Path & Fare Calculation Engine (In Progress — Paused for Next Session)
+- **Date Started:** 27 October 2026
+- **Status:** 🟡 In Progress (Drafted & Type-Checked; Deep Understanding & Tests Pending)
+- **Current State:**
+  - `src/lib/routing/dijkstra.ts` has been written and passes `npx tsc --noEmit` with 0 errors.
+  - Implements `calculateFare(distanceKm, fareRules)` based on official GMRC distance slabs.
+  - Implements `findShortestRoute(graph, originCode, destinationCode, fareRules)` handling:
+    - Origin/Destination validation and same-station edge cases.
+    - Dijkstra distances, travel times, and previous node trackers.
+    - Backtracking from destination to origin.
+    - Building user-facing `RouteStep[]` with actions (`BOARD`, `RIDE`, `INTERCHANGE`, `ALIGHT`).
+
+- **Checkpoint & Agenda for Tomorrow:**
+  - 1. Walk through the Dijkstra loop and backtracking logic slowly and simply in Hinglish.
+  - 2. Understand how interchange station detection works (detecting line change between Blue and Red lines).
+  - 3. Create `src/lib/routing/dijkstra.test.ts` and verify with Vitest tests.

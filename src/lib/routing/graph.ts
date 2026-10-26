@@ -1,4 +1,4 @@
-import type { StationNode, GraphEdge, MetroGraph, AdjacencyList } from './types';
+import type { StationNode, MetroGraph, AdjacencyList } from './types';
 
 export interface RawConnection {
   fromStationCode: string;
