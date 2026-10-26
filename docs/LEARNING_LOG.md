@@ -52,9 +52,35 @@
 
 ---
 
-## Next Step to Resume: Sub-Step 2.2 — Graph Builder Engine
-- **Goal:** Build in-memory `MetroGraph` (Adjacency List) from the verified database seeds.
+### Sub-Step 2.2: In-Memory Metro Graph Builder Engine
+- **Date Completed:** 27 October 2026
+- **Status:** ✅ 100% Complete & Verified
+- **Verification:**
+  - Vitest test suite: `npm test` runs cleanly (`2 passed (2)` files, `3 passed (3)` tests in 1.11s).
+  - TypeScript compiler check: `npx tsc --noEmit` passes with 0 errors.
+
+- **Files Created:**
+  - `src/lib/routing/graph.ts`:
+    - `RawConnection` interface for connection input data.
+    - `buildMetroGraph()` function converting station list and raw connections into an in-memory `MetroGraph` (consisting of `stations` Map and `adjacencyList` Map).
+  - `src/lib/routing/graph.test.ts`:
+    - Unit tests verifying graph building, station lookup, bidirectional edges, middle station connections, and isolated station handling without errors.
+
+- **Key Concepts Learned & Discussed:**
+  - **Why In-Memory Graph**: Querying the database row-by-row on every path hop during graph search is slow; loading data once into memory RAM Maps gives microsecond-level lookups.
+  - **Why Both `stations` & `adjacencyList`**:
+    - `adjacencyList` acts as the GPS/network graph (telling the algorithm where edges go and what distance/time they cost).
+    - `stations` Map acts as the station directory/counter (providing passenger display names, language names, and validation).
+  - **The "Lifafa" (Envelope/Drawer) Mental Model**:
+    - `Map` key is the envelope label (e.g. `'THGM'`, `'OHCT'`).
+    - Inside the envelope is an array (`[]`) where every outgoing connection chit is pushed (`push(...)`).
+  - **Pragmatic Learning Strategy**:
+    - Understand Kya-Kyu-Kaise-Kahan -> Implement with complete comprehension -> Test with Vitest assertions.
+
+---
+
+## Next Step to Resume: Sub-Step 2.3 — Dijkstra's Shortest Path & Fare Calculation Engine
+- **Goal:** Implement Dijkstra's algorithm on the `MetroGraph` to find the shortest path, calculate total distance/travel time, detect line interchanges, and apply GMRC fare slabs.
 - **Files to create:**
-  - `src/lib/routing/graph.ts`: Function `buildMetroGraph()` to construct graph from stations and connections.
-  - `src/lib/routing/graph.test.ts`: Vitest unit tests verifying that 32 stations, 62 bidirectional connections, and the Old High Court interchange junction are correctly loaded into memory.
-- **Sub-Step 2.3 (Follow-up):** Implement Dijkstra's shortest path algorithm using the graph and calculate official GMRC fare.
+  - `src/lib/routing/dijkstra.ts`: `findShortestRoute(graph, originCode, destinationCode, fareRules)` function.
+  - `src/lib/routing/dijkstra.test.ts`: Unit tests testing same-line routes, cross-line interchange routes (Blue <-> Red via Old High Court), and edge cases (same origin/dest, invalid station codes).
