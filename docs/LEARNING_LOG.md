@@ -79,19 +79,36 @@
 
 ---
 
-### Sub-Step 2.3: Dijkstra's Shortest Path & Fare Calculation Engine (In Progress — Paused for Next Session)
+### Sub-Step 2.3: Dijkstra's Shortest Path & Fare Calculation Engine (In Progress)
 - **Date Started:** 27 October 2026
-- **Status:** 🟡 In Progress (Drafted & Type-Checked; Deep Understanding & Tests Pending)
+- **Last Updated:** 28 October 2026
+- **Status:** 🟡 In Progress (Deep Conceptual Walkthrough Ongoing; Code Type-Checked)
 - **Current State:**
   - `src/lib/routing/dijkstra.ts` has been written and passes `npx tsc --noEmit` with 0 errors.
-  - Implements `calculateFare(distanceKm, fareRules)` based on official GMRC distance slabs.
-  - Implements `findShortestRoute(graph, originCode, destinationCode, fareRules)` handling:
-    - Origin/Destination validation and same-station edge cases.
-    - Dijkstra distances, travel times, and previous node trackers.
-    - Backtracking from destination to origin.
-    - Building user-facing `RouteStep[]` with actions (`BOARD`, `RIDE`, `INTERCHANGE`, `ALIGHT`).
+  - Deep walkthrough & understanding in progress following the *Kya-Kyu-Kaise-Kahan* learning strategy.
 
-- **Checkpoint & Agenda for Tomorrow:**
-  - 1. Walk through the Dijkstra loop and backtracking logic slowly and simply in Hinglish.
-  - 2. Understand how interchange station detection works (detecting line change between Blue and Red lines).
-  - 3. Create `src/lib/routing/dijkstra.test.ts` and verify with Vitest tests.
+- **Key Concepts Learned & Discussed in Detail:**
+  - **Phase 1: GMRC Fare Calculation Logic (`calculateFare`)**:
+    - Slab matching algorithm using `minDistanceKm` and `maxDistanceKm`.
+    - Handled the unbounded highest slab ($> 21\text{ km}$) with `maxDistanceKm === null`.
+    - Fallback minimum base fare (₹5) for defensive programming.
+  - **Where `distanceKm` Originates (End-to-End Pipeline)**:
+    - Trace from DB (`station_connections`) $\rightarrow$ in-memory graph (`GraphEdge.distanceKm`) $\rightarrow$ Dijkstra relaxation accumulator (`currentDist + edge.distanceKm` at lines 118–122) $\rightarrow$ final extraction via `distances.get(destinationCode)` at line 199 $\rightarrow$ passed into `calculateFare()`.
+  - **Phase 2: Guard Clauses & Same-Station Edge Case**:
+    - Station validation (`!origin || !destination`) to prevent runtime crashes.
+    - Same-station short-circuit (`originCode === destinationCode`) returning 0 km, 0 min, single `BOARD` step, and base fare without wasting CPU on the graph search.
+  - **Phase 3: The 4 Core Trackers**:
+    - `distances`: Map initialized to `Infinity` for all nodes, `0` for origin (scoreboard).
+    - `travelTimes`: Map tracking cumulative trip time.
+    - `unvisited`: Set checklist of unfinalized stations.
+    - `previous`: `Map<string, { fromCode: string; edge: GraphEdge }>` mental model as "Footprints / Breadcrumbs" storing not just the previous station code, but the complete `edge` object (line code, distance, travel time) to enable backtracking and line interchange detection.
+  - **Phase 4: Dijkstra Main Loop (Lines 86–135) [Currently In Discussion]**:
+    - Part A: Greedy selection of unvisited station with minimum known distance.
+    - Part B: Early exit when reaching `destinationCode` or encountering unreachable nodes.
+    - Part C: Edge relaxation, updating neighbor distances, and using `parseFloat(...toFixed(2))` to avoid JavaScript IEEE-754 floating point inaccuracies.
+
+- **Current Checkpoint & Next Steps:**
+  - 1. Complete deep understanding of Phase 4 (Dijkstra loop lines 86–135) with any questions.
+  - 2. Understand Phase 5: Backtracking from destination to origin using the `previous` Map.
+  - 3. Understand Phase 6: Step directions generation and line transfer (Interchange) detection at Old High Court.
+  - 4. Create `src/lib/routing/dijkstra.test.ts` and verify with Vitest tests.

@@ -9,10 +9,6 @@ export interface RawConnection {
   travelTimeMinutes: number;
 }
 
-/**
- * Builds an in-memory MetroGraph (Adjacency List + Stations Map)
- * from station nodes and connection records.
- */
 export function buildMetroGraph(
   stations: StationNode[],
   connections: RawConnection[]

@@ -1,23 +1,19 @@
-/**
- * Domain Types for Ahmedabad Metro Routing & Fare Calculation Engine
- */
-
 export interface StationNode {
-  id: string; // Database UUID
-  code: string; // Unique station code (e.g., 'THGM', 'OLDH')
-  name: string; // English station name (e.g., 'Thaltej Gam')
+  id: string;
+  code: string;
+  name: string;
   gujaratiName?: string | null;
   hindiName?: string | null;
   isInterchange: boolean;
-  lines: string[]; // Lines passing through this station (e.g., ['BLUE_LINE', 'RED_LINE'])
+  lines: string[];
 }
 
 export interface GraphEdge {
   toStationId: string;
   toStationCode: string;
-  lineCode: string; // Line identifier (e.g., 'BLUE_LINE')
-  distanceKm: number; // Distance between stations in km
-  travelTimeMinutes: number; // Expected travel time in minutes
+  lineCode: string;
+  distanceKm: number;
+  travelTimeMinutes: number;
 }
 
 export type AdjacencyList = Map<string, GraphEdge[]>;

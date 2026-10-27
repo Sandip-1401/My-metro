@@ -3,7 +3,6 @@ import { buildMetroGraph, type RawConnection } from './graph';
 import type { StationNode } from './types';
 
 describe('Metro Graph Builder Engine', () => {
-  // Mock Stations (Ahmedabad Metro sample)
   const mockStations: StationNode[] = [
     {
       id: 'uuid-1',

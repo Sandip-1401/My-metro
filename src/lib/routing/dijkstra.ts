@@ -6,9 +6,6 @@ import type {
   GraphEdge,
 } from './types';
 
-/**
- * Calculates GMRC metro fare based on total distance and official fare slabs.
- */
 export function calculateFare(distanceKm: number, fareRules: FareRule[]): number {
   for (const rule of fareRules) {
     const isAboveMin = distanceKm >= rule.minDistanceKm;
@@ -19,14 +16,9 @@ export function calculateFare(distanceKm: number, fareRules: FareRule[]): number
     }
   }
 
-  // Fallback to lowest base fare if no rule matched
   return 5;
 }
 
-/**
- * Dijkstra's Shortest Path Algorithm for Ahmedabad Metro.
- * Finds the shortest physical route, travel time, interchange steps, and fare.
- */
 export function findShortestRoute(
   graph: MetroGraph,
   originCode: string,
@@ -36,12 +28,10 @@ export function findShortestRoute(
   const origin = graph.stations.get(originCode);
   const destination = graph.stations.get(destinationCode);
 
-  // 1. Validation: Dono stations graph me maujood hone chahiye
   if (!origin || !destination) {
     return null;
   }
 
-  // 2. Special Case: Agar origin aur destination same station ho
   if (originCode === destinationCode) {
     const initialStep: RouteStep = {
       stepNumber: 1,
@@ -66,20 +56,17 @@ export function findShortestRoute(
     };
   }
 
-  // 3. Dijkstra Data Structures (Trackers)
   const distances = new Map<string, number>();
   const travelTimes = new Map<string, number>();
   const previous = new Map<string, { fromCode: string; edge: GraphEdge }>();
   const unvisited = new Set<string>();
 
-  // Initialize trackers for all stations
   for (const code of graph.stations.keys()) {
     distances.set(code, Infinity);
     travelTimes.set(code, Infinity);
     unvisited.add(code);
   }
 
-  // Origin station se shuruat
   distances.set(originCode, 0);
   travelTimes.set(originCode, 0);
 
