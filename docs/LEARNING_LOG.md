@@ -81,11 +81,11 @@
 
 ### Sub-Step 2.3: Dijkstra's Shortest Path & Fare Calculation Engine (In Progress)
 - **Date Started:** 27 October 2026
-- **Last Updated:** 28 October 2026
-- **Status:** 🟡 In Progress (Deep Conceptual Walkthrough Ongoing; Code Type-Checked)
+- **Last Updated:** 29 October 2026
+- **Status:** 🟡 In Progress (Dijkstra Loop Fully Understood up to Line 117; Backtracking & Tests Pending)
 - **Current State:**
   - `src/lib/routing/dijkstra.ts` has been written and passes `npx tsc --noEmit` with 0 errors.
-  - Deep walkthrough & understanding in progress following the *Kya-Kyu-Kaise-Kahan* learning strategy.
+  - Completed deep line-by-line understanding of Phase 1, Phase 2, Phase 3, and Phase 4 (up to Line 117).
 
 - **Key Concepts Learned & Discussed in Detail:**
   - **Phase 1: GMRC Fare Calculation Logic (`calculateFare`)**:
@@ -93,22 +93,28 @@
     - Handled the unbounded highest slab ($> 21\text{ km}$) with `maxDistanceKm === null`.
     - Fallback minimum base fare (₹5) for defensive programming.
   - **Where `distanceKm` Originates (End-to-End Pipeline)**:
-    - Trace from DB (`station_connections`) $\rightarrow$ in-memory graph (`GraphEdge.distanceKm`) $\rightarrow$ Dijkstra relaxation accumulator (`currentDist + edge.distanceKm` at lines 118–122) $\rightarrow$ final extraction via `distances.get(destinationCode)` at line 199 $\rightarrow$ passed into `calculateFare()`.
+    - Trace from DB (`station_connections`) $\rightarrow$ in-memory graph (`GraphEdge.distanceKm`) $\rightarrow$ Dijkstra relaxation accumulator (`currentDist + edge.distanceKm`) $\rightarrow$ final extraction via `distances.get(destinationCode)` $\rightarrow$ passed into `calculateFare()`.
   - **Phase 2: Guard Clauses & Same-Station Edge Case**:
     - Station validation (`!origin || !destination`) to prevent runtime crashes.
-    - Same-station short-circuit (`originCode === destinationCode`) returning 0 km, 0 min, single `BOARD` step, and base fare without wasting CPU on the graph search.
+    - Same-station short-circuit (`originCode === destinationCode`) returning 0 km, 0 min, single `BOARD` step, and base fare without wasting CPU on graph search.
   - **Phase 3: The 4 Core Trackers**:
     - `distances`: Map initialized to `Infinity` for all nodes, `0` for origin (scoreboard).
-    - `travelTimes`: Map tracking cumulative trip time.
+    - `travelTimes`: Map tracking cumulative trip time in minutes.
     - `unvisited`: Set checklist of unfinalized stations.
-    - `previous`: `Map<string, { fromCode: string; edge: GraphEdge }>` mental model as "Footprints / Breadcrumbs" storing not just the previous station code, but the complete `edge` object (line code, distance, travel time) to enable backtracking and line interchange detection.
-  - **Phase 4: Dijkstra Main Loop (Lines 86–135) [Currently In Discussion]**:
-    - Part A: Greedy selection of unvisited station with minimum known distance.
-    - Part B: Early exit when reaching `destinationCode` or encountering unreachable nodes.
-    - Part C: Edge relaxation, updating neighbor distances, and using `parseFloat(...toFixed(2))` to avoid JavaScript IEEE-754 floating point inaccuracies.
+    - `previous`: `Map<string, { fromCode: string; edge: GraphEdge }>` mental model as "Footprints / Breadcrumbs" storing current station, previous station code, and full edge object (line code, distance, travel time) to enable backtracking and line interchange detection.
+  - **Phase 4: Dijkstra Main Loop (Lines 78–117) [Fully Mastered]**:
+    - **Minimum Distance Node Selection**: How `currentCode` starts as `null` and gets assigned the station with the smallest distance from `unvisited`.
+    - **Early Break & Safety**: Stopping when the destination is reached or when remaining stations are unreachable (`smallestDistance === Infinity`).
+    - **Cycle Prevention**: Skipping already finalized stations using `if (!unvisited.has(edge.toStationCode)) continue;` to prevent ping-pong infinite loops.
+    - **Current Distance Retrieval**: `distances.get(currentCode) ?? 0` with nullish coalescing defensive guard.
+    - **Floating-Point Accuracy**: Resolving JS IEEE-754 precision issues (`0.1 + 0.2 = 0.30000000000000004`) via `parseFloat((currentDist + edge.distanceKm).toFixed(2))`.
+    - **The Relay Race Mental Model**: How `distances.set(edge.toStationCode, newDist)` writes in round $N$ (e.g. at Thaltej), and `distances.get(currentCode)` reads it in round $N+1$ (when arriving at Doordarshan).
+    - **Relaxation Updates**: Updating `distances`, `travelTimes`, and `previous` when a shorter route is found.
 
-- **Current Checkpoint & Next Steps:**
-  - 1. Complete deep understanding of Phase 4 (Dijkstra loop lines 86–135) with any questions.
-  - 2. Understand Phase 5: Backtracking from destination to origin using the `previous` Map.
-  - 3. Understand Phase 6: Step directions generation and line transfer (Interchange) detection at Old High Court.
+- **Current Checkpoint & Next Steps for Next Session:**
+  - 1. Resume from **Line 119–122**: Unreachable destination check (`if (!previous.has(destinationCode)) return null;`).
+  - 2. Understand **Phase 5: Backtracking (Lines 124–133)**: How we walk backwards from `destinationCode` to `originCode` using `hops.unshift()` and `previous.get(curr)`.
+  - 3. Understand **Phase 6: RouteStep Directions & Interchange Detection (Lines 135–205)**:
+     - Generating `BOARD`, `RIDE`, `INTERCHANGE`, and `ALIGHT` steps.
+     - Detecting line switches (`hop.edge.lineCode !== nextHop.edge.lineCode`) at Old High Court (Blue Line $\leftrightarrow$ Red Line).
   - 4. Create `src/lib/routing/dijkstra.test.ts` and verify with Vitest tests.
