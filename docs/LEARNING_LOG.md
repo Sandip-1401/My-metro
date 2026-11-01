@@ -128,9 +128,60 @@
       - `action: 'RIDE'` for regular intermediate stops.
     - **Final Payload**: Returning complete `RouteResult` including `totalDistanceKm` (safely formatted), `totalTravelTimeMinutes`, and `fareInr`.
 
-- **Git Commit Target:** `feat: complete step 2 - dijkstra shortest path engine, fare calculation, and vitest test suite`
+- **Git Commit:** `d0d9916 dijkstra shortest path engine, fare calculation, and vitest test suite` (committed & pushed to GitHub)
 
 ---
 
-## Step 3: Verified Station Directory & Line Filtering (Upcoming)
-- **Scope:** React Server Components (RSC) for station directory, dynamic routes `[code]`, line filtering (Blue Line vs Red Line), facilities badges (Elevator, Parking), and loading skeletons.
+## Step 3: Verified Station Directory & Line Filtering (In Progress)
+- **Feature Branch:** `feature/step-3-station-directory` (pushed to GitHub remote)
+- **Sub-Step Branch:** `feature/step-3.1-db-queries`
+
+### Sub-Step 3.1: Data Access Layer & Drizzle Query Engine (In Progress)
+- **Date Started:** 2 November 2026
+- **Status:** 🟡 In Progress (Core types & `getAllStations()` implemented and verified; detail queries pending)
+- **Files Modified / Created:**
+  - `src/lib/stations.ts`:
+    - `StationLineInfo`: TypeScript interface for metro line details (code, displayName, color, sequenceOrder).
+    - `StationWithLines`: Clean domain interface for stations with associated lines array.
+    - `getAllStations(lineCode?: string)`: Drizzle relational query with optional line filtering and sequence sorting.
+- **Verification:**
+  - `npx tsc --noEmit` passes cleanly with 0 errors.
+
+- **Key Concepts Learned & Discussed in Detail:**
+  - **Git Branching Mastery:**
+    - The Tree / Parallel Universe mental model for feature branches.
+    - Difference between `git switch -c <name>` and `git checkout -b <name>` (both create and switch, `switch` is the modern Git 2.23+ dedicated command for branches).
+    - Managing micro-branches for sub-steps (`feature/step-3.1-db-queries` off `feature/step-3-station-directory`).
+  - **Next.js 15 App Router vs Normal React (RSC Paradigm Shift):**
+    - Why RSC (React Server Components) eliminate the need for separate Express backends, `fetch()`, `useEffect()`, and `useState()`.
+    - Server components directly query PostgreSQL in milliseconds, returning pre-rendered HTML with 0ms client loading spinners and optimal SEO.
+    - Next.js folder-based routing: `src/app/stations/page.tsx` $\rightarrow$ `/stations`, and dynamic segments `[code]` $\rightarrow$ `/stations/[code]`.
+  - **Incremental Pair-Programming Strategy:**
+    - Agreement on writing code bite-by-bite (10-15 lines) rather than dumping 100+ line files, ensuring full comprehension of syntax, types, and architecture before proceeding.
+  - **Drizzle ORM Relational Queries (`with` clause):**
+    - How `db.query.stations.findMany({ with: { stationLines: { with: { line: true } } } })` works under the hood.
+    - How Drizzle uses predefined relations in `schema.ts` (`stationsRelations`, `stationLinesRelations`) to execute automatic SQL `LEFT JOIN`s without manual SQL boilerplate.
+  - **Domain Mould / Saancha (`StationWithLines`):**
+    - Why we map raw DB rows to `StationWithLines`: stripping internal DB timestamps, secret IDs, and packaging only passenger-relevant attributes (Gujarati, Hindi names, facilities, line colors).
+  - **Line Filtering & Sequence Sorting Mechanics:**
+    - Using `lines.some(l => l.lineCode === normalized)` for filtering.
+    - The School Assembly mental model for `array.sort((a, b) => aSeq - bSeq)`:
+      - If $(a - b)$ is negative, $a$ comes first; if positive, $b$ comes first.
+    - **The End-to-End Lifecycle of `sequenceOrder`:**
+      - Traced from GMRC metro map stop numbers $\rightarrow$ `src/db/seed.ts` (1, 2, 3...) $\rightarrow$ PostgreSQL DB (`station_lines.sequence_order`) $\rightarrow$ Drizzle query `sl.sequenceOrder` $\rightarrow$ `StationLineInfo` $\rightarrow$ `sort((a, b) => aSeq - bSeq)` so stations render in train travel order.
+
+- **Checkpoint & Next Steps for Next Session:**
+  - **MANDATORY CODING STYLE & PEDAGOGY RULE:**
+    - Always follow incremental pair-programming: write code in small, bite-sized chunks (10-15 lines at a time).
+    - NEVER dump a large multi-function file all at once.
+    - Explain syntax, origin of every variable/property, mental model, and architecture (Kya - Kyu - Kaise - Kahan) before and after writing.
+  - **Immediate Next Tasks in `src/lib/stations.ts` (Current line count: ~68 lines):**
+    - 1. Add `ConnectedStation` and `StationDetail` interfaces (for dynamic station details and adjacent stops).
+    - 2. Implement `getStationByCode(code: string)` using `db.query.stations.findFirst(...)` with `outgoingConnections` relation.
+    - 3. Implement `getAllMetroLines()` querying `metroLines` table for active lines.
+    - 4. Test/Verify with `npx tsc --noEmit`.
+    - 5. Git commit on `feature/step-3.1-db-queries`, switch to `feature/step-3-station-directory`, and merge.
+  - **Upcoming Sub-Steps in Step 3:**
+    - Sub-Step 3.2: Reusable UI Components (`src/components/LineBadge.tsx` and `src/components/StationCard.tsx`).
+    - Sub-Step 3.3: Directory Listing (`src/app/stations/page.tsx`) with search params line filtering (`?line=BLUE_LINE`).
+    - Sub-Step 3.4: Dynamic Station Page (`src/app/stations/[code]/page.tsx`).
