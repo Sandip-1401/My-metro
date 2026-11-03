@@ -21,6 +21,33 @@ export interface StationWithLines {
   lines: StationLineInfo[]; // Ek station multiple lines par ho sakta hai (jaise Old High Court)
 }
 
+// 3. Ek connected/adjacent station (Agla ya pichla station)
+export interface ConnectedStation {
+  code: string;
+  name: string;
+  lineCode: string;
+  lineColor: string;
+  distanceKm: number;
+  travelTimeMinutes: number;
+}
+
+// 4. Station detail page ke liye comprehensive model
+export interface StationDetail extends StationWithLines {
+  latitude: number | null;
+  longitude: number | null;
+  isOperational: boolean;
+  connectedStations: ConnectedStation[];
+}
+
+// 5. Metro Line model (UI Filter buttons ke liye)
+export interface MetroLineItem {
+  id: string;
+  code: string;
+  name: string;
+  displayName: string;
+  color: string;
+}
+
 /**
  * Database se saare 32 stations aur unki lines fetch karna
  * Optional lineCode: 'BLUE_LINE' ya 'RED_LINE' se filter kar sakte hain.
@@ -73,5 +100,83 @@ export async function getAllStations(lineCode?: string): Promise<StationWithLine
     const bSeq = b.lines.find((l) => l.lineCode === normalized)?.sequenceOrder ?? 0;
     return aSeq - bSeq;
   });
+}
+
+/**
+ * Station code (e.g. 'THGM', 'OHCT') se ek single station ki poori detail fetch karna
+ */
+export async function getStationByCode(code: string): Promise<StationDetail | null> {
+  const normalizedCode = code.trim().toUpperCase();
+
+  // 1. Database se single station dhoondhna with its lines and connected stations
+  const stationData = await db.query.stations.findFirst({
+    where: (stations, { eq }) => eq(stations.code, normalizedCode),
+    with: {
+      stationLines: {
+        with: {
+          line: true,
+        },
+      },
+      outgoingConnections: {
+        with: {
+          toStation: true,
+          line: true,
+        },
+      },
+    },
+  });
+
+  // Agar station code database me exist nahi karta
+  if (!stationData) {
+    return null;
+  }
+
+  // 2. StationDetail saanche me map karke return karna
+  return {
+    id: stationData.id,
+    code: stationData.code,
+    name: stationData.name,
+    gujaratiName: stationData.gujaratiName,
+    hindiName: stationData.hindiName,
+    latitude: stationData.latitude ? parseFloat(stationData.latitude) : null,
+    longitude: stationData.longitude ? parseFloat(stationData.longitude) : null,
+    isInterchange: stationData.isInterchange,
+    isOperational: stationData.isOperational,
+    hasElevator: stationData.hasElevator,
+    hasParking: stationData.hasParking,
+    lines: stationData.stationLines.map((sl) => ({
+      lineCode: sl.line.code,
+      displayName: sl.line.displayName,
+      color: sl.line.color,
+      sequenceOrder: sl.sequenceOrder,
+    })),
+    connectedStations: stationData.outgoingConnections.map((conn) => ({
+      code: conn.toStation.code,
+      name: conn.toStation.name,
+      lineCode: conn.line.code,
+      lineColor: conn.line.color,
+      distanceKm: parseFloat(conn.distanceKm),
+      travelTimeMinutes: conn.travelTimeMinutes,
+    })),
+  };
+}
+
+/**
+ * Saari active metro lines fetch karna (e.g. Blue Line, Red Line)
+ * Station Directory UI me filter buttons ke liye use hota hai.
+ */
+export async function getAllMetroLines(): Promise<MetroLineItem[]> {
+  const lines = await db.query.metroLines.findMany({
+    where: (lines, { eq }) => eq(lines.isActive, true),
+    orderBy: (lines, { asc }) => [asc(lines.name)],
+  });
+
+  return lines.map((l) => ({
+    id: l.id,
+    code: l.code,
+    name: l.name,
+    displayName: l.displayName,
+    color: l.color,
+  }));
 }
 
