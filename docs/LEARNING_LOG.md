@@ -176,6 +176,18 @@
 
 ---
 
+### 🚨 GOLDEN PAIR-PROGRAMMING & WORKFLOW RULES (MANDATORY)
+1. **User Controls The Terminal 100%**:
+   - The AI Assistant must NEVER run bash/powershell commands (git, npm, npx, verification scripts, tsx, test runners) behind the user's back.
+   - ALL terminal commands must be run by the USER directly in their own terminal.
+   - The AI's job is to provide the exact command, explain **KYA** it does, **KYU** we run it, and what output to expect.
+2. **Bite-Sized Incremental Coding**:
+   - Write code in 10-15 line chunks at a time.
+   - Explain syntax, origin of variables, architecture, and mental models before/after every step.
+   - Full user alignment before writing files.
+
+---
+
 ### Sub-Step 3.2: Reusable UI Components (In Progress)
 - **Feature Branch:** `feature/step-3-station-directory`
 - **Sub-Step Branch:** `feature/step-3.2-ui-components`
