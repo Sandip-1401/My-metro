@@ -134,54 +134,52 @@
 
 ## Step 3: Verified Station Directory & Line Filtering (In Progress)
 - **Feature Branch:** `feature/step-3-station-directory` (pushed to GitHub remote)
-- **Sub-Step Branch:** `feature/step-3.1-db-queries`
+- **Sub-Step Branch:** `feature/step-3.1-db-queries` (merged into `feature/step-3-station-directory`)
 
-### Sub-Step 3.1: Data Access Layer & Drizzle Query Engine (In Progress)
-- **Date Started:** 2 November 2026
-- **Status:** 🟡 In Progress (Core types & `getAllStations()` implemented and verified; detail queries pending)
-- **Files Modified / Created:**
-  - `src/lib/stations.ts`:
-    - `StationLineInfo`: TypeScript interface for metro line details (code, displayName, color, sequenceOrder).
-    - `StationWithLines`: Clean domain interface for stations with associated lines array.
-    - `getAllStations(lineCode?: string)`: Drizzle relational query with optional line filtering and sequence sorting.
+### Sub-Step 3.1: Data Access Layer & Drizzle Query Engine
+- **Date Completed:** 3 November 2026
+- **Status:** ✅ 100% Complete & Verified
 - **Verification:**
   - `npx tsc --noEmit` passes cleanly with 0 errors.
+  - Vitest test suite: `npm test` runs cleanly (`3 passed (3)` files, `11 passed (11)` tests in 714ms).
+  - Real DB queries verified via `npx tsx -r dotenv/config`:
+    - `getAllStations()`: 32 stations with line associations.
+    - `getAllStations('BLUE_LINE')`: 18 stations in sequence order (Thaltej Gam to Vastral Gam).
+    - `getAllStations('RED_LINE')`: 15 stations in sequence order (APMC to Motera Stadium).
+    - `getStationByCode('OHCT')`: Old High Court with both Blue & Red lines and 4 adjacent connected stations.
+    - `getAllMetroLines()`: Active Blue Line (#2563eb) and Red Line (#dc2626).
+
+- **Files Modified / Created:**
+  - `src/lib/stations.ts`:
+    - `StationLineInfo`: Metro line details (code, displayName, color, sequenceOrder).
+    - `StationWithLines`: Station domain model with associated lines array.
+    - `ConnectedStation`: Adjacent station hop (code, name, lineCode, lineColor, distanceKm, travelTimeMinutes).
+    - `StationDetail`: Comprehensive station model extending `StationWithLines` with coordinates, operational status, and connected stations list.
+    - `MetroLineItem`: Active metro corridor model for UI filter buttons.
+    - `getAllStations(lineCode?: string)`: Relational Drizzle query with line filtering and sequence sorting.
+    - `getStationByCode(code: string)`: Single station fetch with uppercase normalization, safe float conversions, and outgoing connections relation.
+    - `getAllMetroLines()`: Fetches active metro lines for UI filter pills.
 
 - **Key Concepts Learned & Discussed in Detail:**
-  - **Git Branching Mastery:**
-    - The Tree / Parallel Universe mental model for feature branches.
-    - Difference between `git switch -c <name>` and `git checkout -b <name>` (both create and switch, `switch` is the modern Git 2.23+ dedicated command for branches).
-    - Managing micro-branches for sub-steps (`feature/step-3.1-db-queries` off `feature/step-3-station-directory`).
+  - **Git Branching & Merge Flow:**
+    - Sub-step branch `feature/step-3.1-db-queries` created, committed, and fast-forward merged into `feature/step-3-station-directory` and pushed to GitHub.
   - **Next.js 15 App Router vs Normal React (RSC Paradigm Shift):**
     - Why RSC (React Server Components) eliminate the need for separate Express backends, `fetch()`, `useEffect()`, and `useState()`.
     - Server components directly query PostgreSQL in milliseconds, returning pre-rendered HTML with 0ms client loading spinners and optimal SEO.
-    - Next.js folder-based routing: `src/app/stations/page.tsx` $\rightarrow$ `/stations`, and dynamic segments `[code]` $\rightarrow$ `/stations/[code]`.
-  - **Incremental Pair-Programming Strategy:**
-    - Agreement on writing code bite-by-bite (10-15 lines) rather than dumping 100+ line files, ensuring full comprehension of syntax, types, and architecture before proceeding.
   - **Drizzle ORM Relational Queries (`with` clause):**
-    - How `db.query.stations.findMany({ with: { stationLines: { with: { line: true } } } })` works under the hood.
-    - How Drizzle uses predefined relations in `schema.ts` (`stationsRelations`, `stationLinesRelations`) to execute automatic SQL `LEFT JOIN`s without manual SQL boilerplate.
-  - **Domain Mould / Saancha (`StationWithLines`):**
-    - Why we map raw DB rows to `StationWithLines`: stripping internal DB timestamps, secret IDs, and packaging only passenger-relevant attributes (Gujarati, Hindi names, facilities, line colors).
-  - **Line Filtering & Sequence Sorting Mechanics:**
-    - Using `lines.some(l => l.lineCode === normalized)` for filtering.
-    - The School Assembly mental model for `array.sort((a, b) => aSeq - bSeq)`:
-      - If $(a - b)$ is negative, $a$ comes first; if positive, $b$ comes first.
-    - **The End-to-End Lifecycle of `sequenceOrder`:**
-      - Traced from GMRC metro map stop numbers $\rightarrow$ `src/db/seed.ts` (1, 2, 3...) $\rightarrow$ PostgreSQL DB (`station_lines.sequence_order`) $\rightarrow$ Drizzle query `sl.sequenceOrder` $\rightarrow$ `StationLineInfo` $\rightarrow$ `sort((a, b) => aSeq - bSeq)` so stations render in train travel order.
+    - How `db.query.stations.findMany` and `findFirst` work with nested relations (`stationLines.line`, `outgoingConnections.toStation`, `outgoingConnections.line`).
+    - Using callback predicates `where: (stations, { eq }) => eq(...)` without manual SQL imports.
+  - **Defensive Data Formatting:**
+    - Trimming and uppercasing codes (`code.trim().toUpperCase()`) for fault-tolerant dynamic routes.
+    - Safely parsing PostgreSQL `numeric` strings to JavaScript numbers via `parseFloat()`.
+    - Return `null` guard on non-existent station codes for clean Next.js `notFound()` 404 integration.
 
-- **Checkpoint & Next Steps for Next Session:**
-  - **MANDATORY CODING STYLE & PEDAGOGY RULE:**
-    - Always follow incremental pair-programming: write code in small, bite-sized chunks (10-15 lines at a time).
-    - NEVER dump a large multi-function file all at once.
-    - Explain syntax, origin of every variable/property, mental model, and architecture (Kya - Kyu - Kaise - Kahan) before and after writing.
-  - **Immediate Next Tasks in `src/lib/stations.ts` (Current line count: ~68 lines):**
-    - 1. Add `ConnectedStation` and `StationDetail` interfaces (for dynamic station details and adjacent stops).
-    - 2. Implement `getStationByCode(code: string)` using `db.query.stations.findFirst(...)` with `outgoingConnections` relation.
-    - 3. Implement `getAllMetroLines()` querying `metroLines` table for active lines.
-    - 4. Test/Verify with `npx tsc --noEmit`.
-    - 5. Git commit on `feature/step-3.1-db-queries`, switch to `feature/step-3-station-directory`, and merge.
-  - **Upcoming Sub-Steps in Step 3:**
-    - Sub-Step 3.2: Reusable UI Components (`src/components/LineBadge.tsx` and `src/components/StationCard.tsx`).
-    - Sub-Step 3.3: Directory Listing (`src/app/stations/page.tsx`) with search params line filtering (`?line=BLUE_LINE`).
-    - Sub-Step 3.4: Dynamic Station Page (`src/app/stations/[code]/page.tsx`).
+---
+
+### Sub-Step 3.2: Reusable UI Components (In Progress)
+- **Feature Branch:** `feature/step-3-station-directory`
+- **Sub-Step Branch:** `feature/step-3.2-ui-components`
+- **Components to Build:**
+  - 1. `src/components/LineBadge.tsx`: Reusable pill/badge displaying metro line badge with dynamic background color, text color, and responsive sizing.
+  - 2. `src/components/StationCard.tsx`: Reusable card displaying station name, Gujarati/Hindi typography, interchange indicator, facilities chips (elevator, parking), and line badges.
+  - 3. Verification: Component render verification with Next.js & Tailwind CSS.
